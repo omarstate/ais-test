@@ -22,7 +22,7 @@ Route::middleware(['web'])->group(function () {
 
 // Protected routes that require token authentication
 Route::middleware(TokenAuthentication::class)->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::view('/dashboard', 'dashboard');
     Route::post('/ais/query', [AisQueryController::class, 'query'])->name('ais.query');
     Route::post('/ais/formservice', [AisQueryController::class, 'formservice'])->name('ais.formservice');
 });

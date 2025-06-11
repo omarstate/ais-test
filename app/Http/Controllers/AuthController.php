@@ -3,49 +3,31 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Services\AuthenticationService;
 
 class AuthController extends Controller
 {
-    private const DEVICE_NAME = "JDE";
-    private const ENVIRONMENT = "JPY920";
+    private $authService;
+
+    public function __construct(AuthenticationService $authService)
+    {
+        $this->authService = $authService;
+    }
 
     public function auth(Request $request)
     {
         try {
-            // Validate the request
-            $request->validate([
-                'username' => 'required',
-                'password' => 'required',
-            ]);
-
-            // Prepare the authentication request
-            $authData = [
-                'deviceName' => self::DEVICE_NAME,
-                'environment' => self::ENVIRONMENT,
-                'username' => $request->username,
-                'password' => $request->password,
-            ];
-
-            // Send the authentication request to the JDE server
-            $response = Http::post('http://jdeweb.epxlogistics.com:5000/jderest/tokenrequest', $authData);
+            // Use the authentication service
+            $response = $this->authService->authenticate($request->username, $request->password);
             $responseBody = $response->json();
 
             if ($response->successful() && isset($responseBody['userInfo']['token'])) {
-                // Store the token and full response in the session
-                session([
-                    'token' => $responseBody['userInfo']['token'],
-                    'fullResponse' => $responseBody,
-                    'persistent_token' => $responseBody['userInfo']['token'],
-                    'persistent_fullResponse' => $responseBody
-                ]);
-
-                return redirect()->intended('/dashboard')->with('success', 'Successfully logged in');
+                $this->authService->storeSession($responseBody);
+                return redirect()->intended('/dashboard')->with('success', 'Successfully logged in.');
+                
             } else {
-                return back()
-                    ->withInput($request->only('username'))
-                    ->with('error', 'Invalid username or password');
+                return $this->authService->handleFailure($request, 'Invalid username or password');
             }
         } catch (\Exception $e) {
             Log::error('Authentication error: ' . $e->getMessage());
