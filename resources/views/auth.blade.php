@@ -6,12 +6,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if token exists in sessionStorage
-            const token = sessionStorage.getItem('aisAuthToken');
-            if (token) {
-                // If token exists, redirect to dashboard
-                window.location.href = '/dashboard';
+            // Only check token and redirect if we're not coming from a logout
+            if (!sessionStorage.getItem('logging_out')) {
+                const token = sessionStorage.getItem('aisAuthToken');
+                if (token) {
+                    // If token exists, redirect to dashboard
+                    window.location.href = '/dashboard';
+                }
             }
+            // Clear the logging out flag
+            sessionStorage.removeItem('logging_out');
         });
     </script>
 </head>
@@ -21,8 +25,18 @@
     <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Login</h2>
 
     @if (session('error'))
-        <div class="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">
-            {{ session('error') }}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative" role="alert">
+            <span class="block sm:inline">{{ session('error') }}</span>
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <ul class="list-disc list-inside">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
 
@@ -31,14 +45,27 @@
 
         <div>
             <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-            <input type="text" id="username" name="username" required
-                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+            <input type="text" 
+                   id="username" 
+                   name="username" 
+                   value="{{ old('username') }}"
+                   required
+                   class="mt-1 block w-full px-4 py-2 border @error('username') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+            @error('username')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
         </div>
 
         <div>
             <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-            <input type="password" id="password" name="password" required
-                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+            <input type="password" 
+                   id="password" 
+                   name="password" 
+                   required
+                   class="mt-1 block w-full px-4 py-2 border @error('password') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+            @error('password')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
         </div>
 
         <button type="submit"
