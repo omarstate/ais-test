@@ -17,7 +17,7 @@ class AuthenticationService
     //Authenticate the user
     public function authenticate(string $username, string $password): Response
     {
-        return Http::post('http://jdeweb.epxlogistics.com:5000/jderest/tokenrequest', [
+        return Http::post(env('JDE_TOKEN_REQUEST'), [
             'deviceName' => self::DEVICE_NAME,
             'environment' => self::ENVIRONMENT,
             'username' => $username,
@@ -27,16 +27,16 @@ class AuthenticationService
     }
 
     //Store the session data in the session
-    public function storeSession(array $userInfo): void
+    public function storeSession(array $responseBody): void
 {
-    $token = $userInfo['userInfo']['token'] ?? null;
+    $token = $responseBody['userInfo']['token'] ?? null;
 
     if ($token) {
         session([
             'token' => $token,
-            'fullResponse' => $userInfo,
+            'fullResponse' => $responseBody,
             'persistent_token' => $token,
-            'persistent_fullResponse' => $userInfo,
+            'persistent_fullResponse' => $responseBody,
         ]);
     }
 }
